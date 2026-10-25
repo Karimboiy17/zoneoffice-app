@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Admin</title>
+<link rel="stylesheet" href="../style.css?v=48">
+<style>
+  .card2{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+  .card2 h3{margin:0 0 10px;font-size:13px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .br{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+  .br:last-child{border:0}
+  .br .nm{font-size:14px;font-weight:600}
+  .br .mt{font-size:12px;color:var(--dim);margin-top:2px}
+  .br .rt{font-size:13px;color:var(--dim);white-space:nowrap}
+  .bar{height:4px;border-radius:2px;background:var(--line);margin-top:6px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--acc)}
+  input.q{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:transparent;color:inherit;font-size:14px;margin-bottom:10px}
+  .st{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .st:last-child{border:0}
+  .st .av{width:28px;height:28px;border-radius:50%;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:12px}
+  .st .nm{flex:1;font-size:14px}
+  .st .nm i{display:block;font-size:11px;color:var(--dim);font-style:normal;margin-top:1px}
+  .tag{font-size:11px;padding:3px 7px;border-radius:6px;border:1px solid var(--line);color:var(--dim)}
+  .tag.c{color:var(--acc);border-color:var(--acc)}
+  .empty{color:var(--dim);font-size:14px;text-align:center;padding:18px 0}
+  .st{cursor:pointer}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-end;z-index:50}
+  .modal.on{display:flex}
+  .sheet{width:100%;background:var(--card);border-radius:16px 16px 0 0;padding:16px;max-height:88vh;overflow:auto}
+  .sheet h2{margin:0 0 3px;font-size:16px}
+  .sheet .sub2{color:var(--dim);font-size:12px;margin-bottom:12px}
+  .sheet .lb{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px;margin:12px 0 6px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{padding:8px 12px;border-radius:9px;border:1px solid var(--line);font-size:13px;background:transparent;color:inherit}
+  .chip.on{border-color:var(--acc);color:var(--acc)}
+  .chip.danger.on{border-color:#e35b5b;color:#e35b5b}
+  .sheet .save{width:100%;margin-top:16px;padding:12px;border-radius:11px;border:0;background:var(--acc);color:#000;font-size:15px;font-weight:600}
+  .sheet .close{float:right;background:none;border:0;color:var(--dim);font-size:20px;line-height:1}
+  .sheet .msg{font-size:13px;margin-top:10px;color:var(--dim)}
+  .wr{padding:10px 0;border-bottom:1px solid var(--line)}
+  .wr:last-child{border:0}
+  .wn{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;margin-bottom:8px}
+  .ws{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;border:1px solid var(--line);color:var(--dim)}
+  .ws.open{color:#3ddc84;border-color:#3ddc84}
+  .ws.shut{color:#e0a832;border-color:#e0a832}
+  .wic{display:flex;align-items:center;gap:6px;margin-bottom:8px;color:var(--dim)}
+  .wic input[type=time]{flex:1;padding:8px;border-radius:9px;border:1px solid var(--line);
+    background:transparent;color:inherit;font-size:14px;font-family:inherit}
+  .wrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .wt{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px}
+  .wsv{padding:8px 14px;border-radius:9px;border:1px solid rgba(126,240,184,.35);background:rgba(126,240,184,.14);color:var(--ok);font-size:13px;font-weight:600;font-family:inherit}
+  .wmsg{font-size:12px;margin-top:6px;color:var(--dim)}
+.wr.off .wic{opacity:.45}
+.wic input[type=time]:disabled{opacity:.6}
+</style>
+<link rel="stylesheet" href="../assets/ui.css?v=48">
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../index.html">← Orqaga</a>
+  <div class="ttl">Admin</div>
+  <div class="sub" id="who">—</div>
+
+  <div class="card2" id="pendCard" style="display:none">
+    <h3>Kutayotganlar</h3><div id="pend"></div>
+  </div>
+  <div class="card2"><h3>Filiallar</h3><div id="brs"></div></div>
+  <div class="card2"><h3>Tekshiruv vaqti</h3><div id="wins"><div class="empty">yuklanmoqda…</div></div></div>
+  <div class="card2"><h3>Koordinatorlar</h3><div id="coords"></div></div>
+  <div class="card2">
+    <h3>Xodimlar</h3>
+    <input class="q" id="q" placeholder="ism yoki filial bo‘yicha qidirish">
+    <div id="staff"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <button class="close" onclick="closeModal()">×</button>
+    <h2 id="mName">—</h2>
+    <div class="sub2" id="mSub">—</div>
+
+    <div class="lb">Rol</div>
+    <div class="chips" id="mRole"></div>
+
+    <div class="lb">Filial</div>
+    <div class="chips" id="mBranch"></div>
+
+    <div class="lb">Holat</div>
+    <div class="chips" id="mStatus"></div>
+
+    <button class="save" onclick="saveUser()">Saqlash</button>
+    <div class="msg" id="mMsg"></div>
+  </div>
+</div>
+
+<div class="modal" id="pModal">
+  <div class="sheet">
+    <button class="close" onclick="closePend()">×</button>
+    <h2 id="pName">—</h2>
+    <div class="sub2" id="pSub">—</div>
+
+    <div class="lb">Filial</div>
+    <div class="chips" id="pBranch"></div>
+
+    <div class="lb">Smena</div>
+    <div class="chips" id="pShift"></div>
+
+    <button class="save" onclick="approvePend()">Tasdiqlash</button>
+    <button class="save" style="background:#e35b5b;color:#fff;margin-top:8px" onclick="rejectPend()">Rad etish</button>
+    <div class="msg" id="pMsg"></div>
+  </div>
+</div>
+
+<script src="../assets/telegram-web-app.js"></script>
+<script src="../assets/tg.js?v=48"></script>
+<script>
+var DATA = {staff: []};
+
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+}); }
+
+function initials(n){
+  var p = String(n || "?").trim().split(/\s+/);
+  return esc((p[0] || "?")[0] + (p[1] ? p[1][0] : ""));
+}
+
+function renderStaff(){
+  var q = (document.getElementById("q").value || "").toLowerCase().trim();
+  var list = DATA.staff.filter(function(s){
+    return !q || String(s.name).toLowerCase().indexOf(q) >= 0 ||
+           String(s.branch).toLowerCase().indexOf(q) >= 0;
+  });
+  var el = document.getElementById("staff");
+  if (!list.length){ el.innerHTML = '<div class="empty">topilmadi</div>'; return; }
+  el.innerHTML = list.map(function(s){
+    return '<div class="st" data-cid="' + s.cid + '"><div class="av">' + initials(s.name) + '</div>' +
+      '<div class="nm">' + esc(s.name) + '<i>' + esc(s.branch || "—") + ' · ' + esc(s.role || "xodim") + '</i></div>' +
+      '<span class="tag">' + esc(s.status) + '</span></div>';
+  }).join("");
+  if (OWNER){
+    Array.prototype.forEach.call(el.querySelectorAll(".st"), function(n){
+      n.onclick = function(){ openUser(parseInt(n.getAttribute("data-cid"), 10)); };
+    });
+  }
+}
+
+var SEL = {cid: 0, role: "", branch: "", status: "active"};
+var OWNER = false;
+var BRANCH_LIST = [];
+
+function chipRow(id, opts, key){
+  document.getElementById(id).innerHTML = opts.map(function(o){
+    var on = SEL[key] === o.v ? " on" : "";
+    var dg = o.d ? " danger" : "";
+    return '<button class="chip' + on + dg + '" data-v="' + esc(o.v) + '">' + esc(o.t) + '</button>';
+  }).join("");
+  Array.prototype.forEach.call(document.getElementById(id).querySelectorAll(".chip"), function(b){
+    b.onclick = function(){ SEL[key] = b.getAttribute("data-v"); drawChips(); };
+  });
+}
+
+function drawChips(){
+  chipRow("mRole", [
+    {v:"worker", t:"Xodim (worker)"},
+    {v:"staff", t:"Staff"},
+    {v:"manager", t:"Menejer"}
+  ], "role");
+  var bs = BRANCH_LIST.map(function(b){ return {v:b, t:b}; });
+  bs.push({v:"—", t:"—"});
+  chipRow("mBranch", bs, "branch");
+  chipRow("mStatus", [
+    {v:"active", t:"Faol"},
+    {v:"blocked", t:"Bloklangan", d:true}
+  ], "status");
+}
+
+function openUser(cid){
+  if (!OWNER) return;
+  var s = DATA.staff.filter(function(x){ return x.cid === cid; })[0];
+  if (!s) return;
+  SEL = {cid: cid, role: s.role || "worker", branch: s.branch || "—",
+         status: (String(s.status).toLowerCase() === "blocked" || String(s.status).toLowerCase() === "bloklangan") ? "blocked" : "active"};
+  document.getElementById("mName").textContent = s.name;
+  document.getElementById("mSub").textContent = (s.branch || "—") + " · " + (s.role || "xodim") + " · id " + s.cid;
+  document.getElementById("mMsg").textContent = "";
+  drawChips();
+  document.getElementById("modal").classList.add("on");
+}
+
+function closeModal(){ document.getElementById("modal").classList.remove("on"); }
+
+function saveUser(){
+  var msg = document.getElementById("mMsg");
+  msg.textContent = "saqlanmoqda…";
+  tgJson("/api/tmt/admin/user", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({cid: SEL.cid, role: SEL.role, branch: SEL.branch, status: SEL.status})
+  }).then(function(j){
+    if (j && j.ok){ msg.textContent = "saqlandi ✓"; setTimeout(function(){ closeModal(); load(); }, 600); }
+    else { msg.textContent = (j && j.error) || "xato"; }
+  }).catch(function(){ msg.textContent = "tarmoq xatosi"; });
+}
+
+function load(){
+  tgJson("/api/tmt/admin").then(function(j){
+    if (!j || !j.ok){ document.getElementById("who").textContent = (j && j.error) || "xato"; return; }
+    document.getElementById("who").textContent =
+      j.staff.length + " xodim · " + j.branches.length + " filial" + (j.is_owner ? " · ega" : "");
+    DATA.staff = j.staff || [];
+    DATA.pending = j.pending || [];
+    OWNER = !!j.is_owner;
+    BRANCH_LIST = (j.branches || []).map(function(b){ return b.name; });
+    renderStaff();
+    renderPending();
+    loadWindows();
+
+    document.getElementById("brs").innerHTML = (j.branches || []).map(function(b){
+      var pct = b.rooms ? Math.round(b.done / b.rooms * 100) : 0;
+      return '<div class="br"><div style="flex:1"><div class="nm">' + esc(b.name) + '</div>' +
+        '<div class="mt">' + b.staff + ' xodim · bugun ' + b.done + '/' + b.rooms + ' xona</div>' +
+        '<div class="bar"><i style="width:' + pct + '%"></i></div></div>' +
+        '<div class="rt">' + pct + '%</div></div>';
+    }).join("") || '<div class="empty">filial yo‘q</div>';
+
+    var cs = j.coordinators || [];
+    document.getElementById("coords").innerHTML = cs.length ? cs.map(function(c){
+      return '<div class="br"><div class="av">' + esc((c.name||'?').slice(0,1).toUpperCase()) + '</div>' +
+        '<div style="flex:1"><div class="nm">' + esc(c.name) + '</div>' +
+        '<div class="mt">' + esc(c.branch) + '</div></div>' +
+        '<span class="tag c">koordinator</span></div>';
+    }).join("") : '<div class="empty">koordinator biriktirilmagan</div>';
+  }).catch(function(e){
+    document.getElementById("who").textContent = "tarmoq xatosi";
+  });
+}
+
+// ---------- tekshiruv vaqti ----------
+var WINS = [];
+
+function loadWindows(){
+  tgJson("/api/tmt/check-window").then(function(j){
+    var el = document.getElementById("wins");
+    if (!j || !j.ok){ el.innerHTML = '<div class="empty">' + esc((j && j.error) || "xato") + '</div>'; return; }
+    WINS = j.windows || [];
+    if (!WINS.length){ el.innerHTML = '<div class="empty">filial yo‘q</div>'; return; }
+    el.innerHTML = WINS.map(function(w, i){
+      var st = !w.enabled ? "cheklovsiz" : (w.open ? "ochiq" : "yopiq");
+      var kls = w.enabled ? (w.open ? "open" : "shut") : "";
+      return '<div class="wr" data-i="' + i + '">' +
+        '<div class="wn"><span>' + esc(w.branch) + '</span><span class="ws ' + kls + '">' + st + '</span></div>' +
+        '<div class="wic"><input type="time" class="t1" value="' + esc(w.start) + '"><span>–</span>' +
+        '<input type="time" class="t2" value="' + esc(w.end) + '"></div>' +
+        '<div class="wrow">' + (w.can_edit
+          ? '<label class="wt"><input type="checkbox" class="on2"' + (w.enabled ? ' checked' : '') +
+            '> cheklov yoniq</label><button class="wsv">Saqlash</button>'
+          : '<span class="ws">faqat menejer o\u2018zgartiradi</span>') +
+        '</div>' +
+        '<div class="wmsg">' + (w.enabled
+            ? ("bugun " + esc(w.start) + "–" + esc(w.end) + " · hozir " + esc(w.now))
+            : "istalgan vaqtda rasm yuklash mumkin") + '</div>' +
+      '</div>';
+    }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll(".wr"), function(row){
+      var btn = row.querySelector(".wsv"); if (!btn) return;
+      var on = row.querySelector(".on2");
+      function sync(){ row.querySelector(".t1").disabled = !on.checked; row.querySelector(".t2").disabled = !on.checked;
+                       row.classList.toggle("off", !on.checked); }
+      on.onchange = sync; sync();
+      btn.onclick = function(){ saveWin(parseInt(row.getAttribute("data-i"),10), row); };
+    });
+  }).catch(function(){
+    document.getElementById("wins").innerHTML = '<div class="empty">tarmoq xatosi</div>';
+  });
+}
+
+function saveWin(i, row){
+  var w = WINS[i];
+  if (!w) return;
+  var body = {branch: w.branch,
+              start: row.querySelector(".t1").value,
+              end: row.querySelector(".t2").value,
+              enabled: row.querySelector(".on2").checked};
+  var m = row.querySelector(".wmsg");
+  m.textContent = "saqlanmoqda…";
+  tgJson("/api/tmt/check-window/set", {method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)})
+    .then(function(j){
+      if (j && j.ok){ m.textContent = "✅ saqlandi"; loadWindows(); }
+      else m.textContent = "xato: " + ((j && j.error) || "?");
+    })
+    .catch(function(e){ m.textContent = "tarmoq xatosi: " + e.message; });
+}
+
+// ---------- kutayotganlar ----------
+var PSEL = {cid: 0, role: "worker", branch: "", shift: "morning"};
+
+function renderPending(){
+  var list = DATA.pending || [];
+  var card = document.getElementById("pendCard");
+  if (!OWNER || !list.length){ card.style.display = "none"; return; }
+  card.style.display = "";
+  var el = document.getElementById("pend");
+  el.innerHTML = list.map(function(p){
+    return '<div class="st" data-cid="' + p.cid + '"><div class="av">' + initials(p.name) + '</div>' +
+      '<div class="nm">' + esc(p.name) + '<i>' + esc(p.role === "staff" ? "staff" : "hodim") +
+      (p.at ? " · " + esc(p.at) : "") + '</i></div><span class="tag c">yangi</span></div>';
+  }).join("");
+  Array.prototype.forEach.call(el.querySelectorAll(".st"), function(n){
+    n.onclick = function(){ openPend(parseInt(n.getAttribute("data-cid"), 10)); };
+  });
+}
+
+function openPend(cid){
+  var p = (DATA.pending || []).filter(function(x){ return x.cid === cid; })[0];
+  if (!p) return;
+  PSEL = {cid: cid, role: p.role || "worker",
+          branch: BRANCH_LIST[0] || "", shift: "morning"};
+  document.getElementById("pName").textContent = p.name;
+  document.getElementById("pSub").textContent = p.cid + (p.role === "staff" ? " · staff" : " · hodim");
+  document.getElementById("pMsg").textContent = "";
+  drawPendChips();
+  document.getElementById("pModal").classList.add("on");
+}
+
+function closePend(){ document.getElementById("pModal").classList.remove("on"); }
+
+function drawPendChips(){
+  var bs = BRANCH_LIST.map(function(b){ return {v:b, t:b}; });
+  chipRow.call(null, "pBranch", bs, "branch");
+  // branch chipsi PSEL.branch ni o'qiydi
+  Array.prototype.forEach.call(document.getElementById("pBranch").querySelectorAll(".chip"), function(b){
+    b.classList.toggle("on", b.getAttribute("data-v") === PSEL.branch);
+    b.onclick = function(){ PSEL.branch = b.getAttribute("data-v"); drawPendChips(); };
+  });
+  chipRow.call(null, "pShift", [
+    {v:"morning", t:"🌅 Ertalabki"},
+    {v:"evening", t:"🌆 Tushdan keyingi"}
+  ], "shift");
+  Array.prototype.forEach.call(document.getElementById("pShift").querySelectorAll(".chip"), function(b){
+    b.classList.toggle("on", b.getAttribute("data-v") === PSEL.shift);
+    b.onclick = function(){ PSEL.shift = b.getAttribute("data-v"); drawPendChips(); };
+  });
+}
+
+function pendSend(action){
+  var msg = document.getElementById("pMsg");
+  msg.textContent = "yuborilmoqda…";
+  tgJson("/api/tmt/admin/pending", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({cid: PSEL.cid, action: action,
+                          branch: PSEL.branch, shift: PSEL.shift})
+  }).then(function(j){
+    if (j && j.ok){ msg.textContent = "bajarildi ✓"; setTimeout(function(){ closePend(); load(); }, 600); }
+    else { msg.textContent = (j && j.error) || "xato"; }
+  }).catch(function(){ msg.textContent = "tarmoq xatosi"; });
+}
+
+function approvePend(){ pendSend("approve"); }
+function rejectPend(){ pendSend("reject"); }
+
+document.getElementById("q").oninput = renderStaff;
+tgReady(load);
+</script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Xonalar — TMT</title>
+<link rel="stylesheet" href="../style.css?v=48">
+<script src="../assets/telegram-web-app.js"></script>
+<script src="../assets/tg.js?v=48"></script>
+<script src="../assets/notif.js?v=48"></script>
+<style>
+  .wrap{max-width:520px;margin:0 auto;padding:16px 16px 40px}
+  .back{color:var(--dim);text-decoration:none;font-size:14px}
+  h1{font-size:20px;margin:12px 0 4px}
+  .sub{color:var(--dim);font-size:13px;margin-bottom:12px}
+  .br{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px}
+  .br h3{font-size:14px;margin:0 0 4px;display:flex;justify-content:space-between}
+  .br h3 span{color:var(--dim);font-weight:400;font-size:12px}
+  .bar{height:6px;background:#1b2229;border-radius:4px;overflow:hidden;margin:8px 0 10px}
+  .bar i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .3s}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .rm{background:#12171c;border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;
+    font-size:12px;color:var(--tx);cursor:pointer;min-height:62px;display:flex;flex-direction:column;
+    justify-content:center;gap:3px;font-family:inherit}
+  .rm b{font-size:12px;font-weight:600;line-height:1.15}
+  .rm i{font-style:normal;font-size:11px;color:var(--dim)}
+  .rm.done{border-color:var(--ok);background:#12301f}
+  .rm.part{border-color:#8a6d1f;background:#2a2110}
+  #sheet{position:fixed;inset:0;background:#000d;display:none;align-items:flex-end;z-index:50}
+  #sheet.on{display:flex}
+  #sheet .in{background:var(--panel);width:100%;padding:14px;border-radius:18px 18px 0 0;max-height:94vh;overflow:auto}
+  #sheet h2{font-size:16px;margin:0 0 8px}
+  video#cam{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;background:#000}
+  .row{display:flex;gap:8px;margin-top:10px}
+  .row button{flex:1;border:0;border-radius:12px;padding:12px;font-size:14px;font-weight:600;font-family:inherit}
+  .snap{background:var(--ok);color:#08110c}
+  .ghost{background:#1b2229;color:var(--tx);border:1px solid var(--line)}
+  .st{font-size:13px;color:var(--dim);min-height:0;margin:2px 0 8px}
+  .st:empty{display:none}
+  .st.err{color:#e5484d} .st.ok{color:var(--ok)}
+  .cnt{font-size:13px;color:var(--dim);margin-top:6px}
+  .empty{color:var(--dim);font-size:14px;text-align:center;padding:24px 0}
+  .bw{font-size:11px;margin:2px 0 6px;color:var(--dim)}
+  .bw.open{color:var(--ok)} .bw.shut{color:#e0a832}
+  #bReset{background:#2a2110;border:1px solid #8a6d1f;color:#f2c96b;margin-top:8px;width:100%;
+    border-radius:12px;padding:11px;font-size:13px;font-weight:600;font-family:inherit}
+</style>
+<link rel="stylesheet" href="../assets/ui.css?v=48">
+</head>
+<body data-sec="rooms">
+<div class="wrap">
+  <a class="back" href="../index.html">← Orqaga</a>
+  <h1>Xonalar</h1>
+  <p class="sub" id="who">yuklanmoqda…</p>
+  <div id="list"></div>
+</div>
+
+<div id="sheet">
+  <div class="in">
+    <h2 id="sTitle">Xona</h2>
+    <div class="cnt" id="sCnt">—</div>
+    <div class="st" id="sSt"></div>
+    <video id="cam" autoplay playsinline muted></video>
+    <div class="row">
+      <button class="snap" id="bSnap">📸 Rasm olish</button>
+      <button class="ghost" id="bClose">Yopish</button>
+    </div>
+    <button id="bReset" style="display:none">↻ Qayta tekshiruvga ochish</button>
+  </div>
+</div>
+
+<script>
+var API = "https://zoneoffice-app-production.up.railway.app";
+var ROOMS = API + "/api/tmt/rooms";
+var UP = API + "/api/tmt/upload";
+var need = 2, cur = null, canManage = false, curOpen = true, busy = false, stream = null;
+var WINDOWS = {}, RM = {};
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+function say(msg,cls){ var e=$("sSt"); e.textContent=msg||""; e.className="st"+(cls?" "+cls:""); }
+
+function initLen(){ return window.tgInitLen ? tgInitLen() : 0; }
+function boot(){
+  if (!initLen()){
+    $("who").textContent = "⚠️ Telegram ma'lumoti yo'q — «Ilova» tugmasidan oching";
+    $("list").innerHTML = '<div class="empty">Bu sahifa Telegram ichidan ochilishi kerak</div>';
+    tgWaitInit(function(d){ if (d){ $("list").innerHTML = ''; load(); } });
+    return;
+  }
+  load();
+}
+
+function wline(br){
+  var w = WINDOWS[br];
+  if (!w || !w.enabled) return '<div class="bw off">⏰ vaqt cheklovi yo‘q</div>';
+  var tail = w.open ? (' · ochiq' + (w.left != null ? ' · ' + w.left + ' daq' : '')) : ' · yopiq';
+  return '<div class="bw ' + (w.open ? 'open' : 'shut') + '">⏰ ' + esc(w.start) + '–' + esc(w.end) + tail + '</div>';
+}
+
+function render(branches){
+  if (!branches.length){ $("list").innerHTML = '<div class="empty">Xona topilmadi</div>'; return; }
+  RM = {};
+  $("list").innerHTML = branches.map(function(b){
+    var pct = b.total ? Math.round(b.done / b.total * 100) : 0;
+    return '<div class="br"><h3>'+esc(b.branch)+' <span>'+b.done+'/'+b.total+' · '+pct+'%</span></h3>'+
+      wline(b.branch) +
+      '<div class="bar"><i style="width:'+pct+'%"></i></div>'+
+      '<div class="grid">' + b.rooms.map(function(r){
+        var dn = (r.done === undefined) ? ((r.photos||0) >= (r.need||need)) : !!r.done;
+        RM[r.id] = {id:r.id, name:r.name, branch:b.branch, photos:r.photos||0,
+                    done:dn, reopened:!!r.reopened, staffTotal:r.staff_total||0,
+                    staffDone:r.staff_done||0};
+        var cls = dn ? "done" : ((r.photos || r.reopened) ? "part" : "");
+        var info = dn ? "✓ bajarildi"
+                 : r.reopened ? "↻ qayta ochilgan"
+                 : (canManage ? ((r.staff_total||0) ? (r.staff_done||0)+"/"+r.staff_total+" xodim" : "—")
+                              : (r.photos ? r.photos+"/"+(r.need||need) : "—"));
+        return '<button class="rm '+cls+'" onclick="openRoom('+r.id+')"><b>'+esc(r.name)+'</b><i>'+info+'</i></button>';
+      }).join("") + '</div></div>';
+  }).join("");
+}
+
+function load(){
+  tgFetch(ROOMS, {cache:"no-store"}).then(function(r){ return r.json(); }).then(function(j){
+    if (!j || !j.ok){ $("list").innerHTML = '<div class="empty">Xato: '+esc((j&&j.error)||'')+'</div>'; return; }
+    need = j.need || 2;
+    WINDOWS = j.windows || {};
+    canManage = !!j.can_manage;
+    $("who").textContent = (j.manager ? "menejer · barcha filiallar" : ("filial: " + (j.branch || "—")));
+    render(j.branches || []);
+  }).catch(function(e){ $("list").innerHTML = '<div class="empty">Tarmoq xatosi: '+esc(e.message)+'</div>'; });
+}
+
+function openRoom(id){
+  var r = RM[id]; if (!r) return;
+  if (!initLen()) tgWaitInit(function(d){ if (!d) alert("Telegram ma'lumoti yo'q — «Ilova» tugmasidan oching"); });
+  var w = WINDOWS[r.branch];
+  curOpen = (!w || !w.enabled || !!w.open);
+  cur = r;
+  $("sTitle").textContent = r.name + " · " + r.branch;
+  $("sCnt").textContent = canManage
+    ? (r.done ? "✅ tekshirilgan · " + r.staffDone + "/" + r.staffTotal + " xodim"
+              : "Xodimlar: " + r.staffDone + "/" + r.staffTotal + " · rasm: " + r.photos)
+    : (r.done ? "✅ allaqachon bajarilgan" : "Rasmlar: " + r.photos + "/" + need);
+  $("bReset").style.display = (canManage && (r.done || r.photos || r.reopened || r.staffTotal)) ? "block" : "none";
+  $("cam").style.display = curOpen ? "" : "none";
+  $("bSnap").style.display = curOpen ? "" : "none";
+  $("bClose").style.flex = curOpen ? "" : "1";
+  say("");
+  $("sheet").classList.add("on");
+  if (!curOpen){
+    say("⏰ Tekshiruv vaqti yopiq — " + w.start + "–" + w.end, "err");
+    return;
+  }
+  if (w && w.enabled && w.open && w.left != null) say("⏰ Yopilishiga " + w.left + " daqiqa qoldi");
+  if (!stream){
+    navigator.mediaDevices.getUserMedia({ video:{facingMode:"environment"}, audio:false })
+      .then(function(s){ if (!curOpen){ s.getTracks().forEach(function(t){t.stop();}); return; }
+                        stream=s; $("cam").srcObject=s; })
+      .catch(function(e){ say("Kamera ochilmadi: "+e.message,"err"); });
+  }
+}
+
+function closeSheet(){
+  $("sheet").classList.remove("on");
+  if (stream){ stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
+  $("cam").srcObject = null;
+}
+$("bClose").onclick = closeSheet;
+
+function snap(){
+  if (!stream || busy || !cur || !curOpen) return;
+  var v = $("cam");
+  var w = v.videoWidth || 720, h = v.videoHeight || 960;
+  var c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  c.getContext("2d").drawImage(v, 0, 0, w, h);
+  c.toBlob(function(blob){
+    if (!blob){ say("Rasm olinmadi","err"); return; }
+    busy = true; $("bSnap").disabled = true;
+    say("Yuborilmoqda…");
+    var fd = new FormData();
+    fd.append("file", blob, "xona.jpg");
+    fd.append("kind", "photo");
+    fd.append("purpose", "room");
+    fd.append("room_id", cur.id);
+    fd.append("caption", cur.name);
+    tgFetch(UP, {method:"POST", body:fd})
+      .then(function(r){ return r.json().then(function(j){ return {code:r.status,j:j}; }); })
+      .then(function(res){
+        busy = false; $("bSnap").disabled = false;
+        if (res.j && res.j.ok){
+          var a = res.j.attendance || {};
+          cur.photos = a.photos || (cur.photos + 1);
+          if (a.status === "done"){
+            say("✅ Xona bajarildi — guruhga tushdi","ok");
+            setTimeout(function(){ closeSheet(); load(); }, 700);
+          } else {
+            say("✅ Rasm " + cur.photos + "/" + need + " — yana " + (need - cur.photos) + " ta","ok");
+            $("sCnt").textContent = "Rasmlar: " + cur.photos + "/" + need;
+          }
+        } else if (res.code === 403 && res.j && res.j.window){
+          say("⏰ " + (res.j.error || "Tekshiruv vaqti yopiq"), "err");
+        } else say("Xato: " + ((res.j && res.j.error) || res.code), "err");
+      })
+      .catch(function(e){ busy=false; $("bSnap").disabled=false; say("Tarmoq xatosi: "+e.message,"err"); });
+  }, "image/jpeg", 0.82);
+}
+$("bSnap").onclick = snap;
+
+function doReset(){
+  if (!cur) return;
+  if (!confirm(cur.name + " qayta tekshiruvga ochilsinmi?\nEski rasmlar arxivda saqlanadi.")) return;
+  say("Ochilmoqda…");
+  tgFetch(API + "/api/tmt/rooms/" + cur.id + "/reset", {method:"POST"})
+    .then(function(r){ return r.json().then(function(j){ return {code:r.status, j:j}; }); })
+    .then(function(res){
+      if (res.j && res.j.ok){
+        say("✅ Qayta ochildi — xodim yana rasm yuklashi kerak", "ok");
+        setTimeout(function(){ closeSheet(); load(); }, 800);
+      } else say("Xato: " + ((res.j && res.j.error) || res.code), "err");
+    })
+    .catch(function(e){ say("Tarmoq xatosi: " + e.message, "err"); });
+}
+$("bReset").onclick = doReset;
+
+boot();
+</script>
+</body>
+</html>
