@@ -219,9 +219,9 @@ function load(){
     loadWindows();
 
     document.getElementById("brs").innerHTML = (j.branches || []).map(function(b){
-      var pct = b.rooms ? Math.round(b.done / b.rooms * 100) : 0;
+      var pct = b.staff ? Math.round((b.present || 0) / b.staff * 100) : 0;
       return '<div class="br"><div style="flex:1"><div class="nm">' + esc(b.name) + '</div>' +
-        '<div class="mt">' + b.staff + ' xodim · bugun ' + b.done + '/' + b.rooms + ' xona</div>' +
+        '<div class="mt">' + b.staff + ' xodim · bugun keldi ' + (b.present || 0) + '</div>' +
         '<div class="bar"><i style="width:' + pct + '%"></i></div></div>' +
         '<div class="rt">' + pct + '%</div></div>';
     }).join("") || '<div class="empty">filial yo‘q</div>';

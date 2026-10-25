@@ -52,8 +52,8 @@
   <div id="coords"></div>
 
   <div class="legend">
-    Xodim: xona 5 + har rasm 1 + yopilgan vazifa 15 + muddatida 5 · kechikkan −3<br>
-    Koordinator: filial xonalari bajarilishi × 50 + muddatida vazifa × 10 − kechikkan × 5
+    Xodim: davomat 40 + yopilgan vazifa 15 + muddatida 5 · kechikkan −3<br>
+    Koordinator: filial o‘rtacha bali
   </div>
 </div>
 
@@ -99,9 +99,9 @@ function load(){
       else {
         L.innerHTML = rows.map(function(r){
           var d = [];
-          if (r.rooms_done) d.push(r.rooms_done + " xona");
-          if (r.photos) d.push(r.photos + " rasm");
+          if (r.att_days) d.push(r.att_days + " kun davomat");
           if (r.tasks_done) d.push(r.tasks_done + " vazifa");
+          if (r.ontime) d.push(r.ontime + " muddatida");
           if (r.overdue) d.push(r.overdue + " kechikkan");
           return item(r, (r.branch || "—") + (d.length ? " · " + d.join(" · ") : " · hali harakat yo‘q"));
         }).join("");
@@ -111,7 +111,7 @@ function load(){
       else {
         C.innerHTML = coords.map(function(r){
           var d = [];
-          if (r.rooms_total) d.push(r.rooms_done + "/" + r.rooms_total + " xona");
+          if (r.att_days) d.push(r.att_days + " kun davomat");
           if (r.ontime) d.push(r.ontime + " muddatida");
           if (r.overdue) d.push(r.overdue + " kechikkan");
           return item(r, (r.branches || []).join(", ") + (d.length ? " · " + d.join(" · ") : ""));

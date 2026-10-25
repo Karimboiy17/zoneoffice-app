@@ -43,7 +43,6 @@
   </div>
 
   <div class="card2"><h3>Davomat</h3><div id="att"></div></div>
-  <div class="card2"><h3>Xonalar</h3><div id="rooms"></div></div>
   <div class="card2"><h3>Vazifalar</h3><div id="tasks"></div></div>
   <div class="card2"><h3>Eng faol</h3><div id="top"></div></div>
 
@@ -88,9 +87,9 @@ function rows(obj, fmt){
 }
 
 function load(){
-  var A = document.getElementById("att"), R = document.getElementById("rooms"),
-      T = document.getElementById("tasks"), P = document.getElementById("top");
-  [A, R, T, P].forEach(function(el){ el.innerHTML = '<div class="empty">yuklanmoqda…</div>'; });
+  var A = document.getElementById("att"), T = document.getElementById("tasks"),
+      P = document.getElementById("top");
+  [A, T, P].forEach(function(el){ el.innerHTML = '<div class="empty">yuklanmoqda…</div>'; });
 
   tgJson("/api/tmt/report?period=" + encodeURIComponent(period))
     .then(function(j){
@@ -99,12 +98,6 @@ function load(){
 
       A.innerHTML = '<div class="big">' + (j.att_total || 0) + '<i>kishi kirdi</i></div>'
         + rows(j.att, function(v){ return v; });
-
-      var tot = 0, dn = 0;
-      Object.keys(j.branches || {}).forEach(function(b){ tot += j.branches[b].total; dn += j.branches[b].done; });
-      var pc = tot ? Math.round(dn * 100 / tot) : 0;
-      R.innerHTML = '<div class="big">' + dn + '/' + tot + '<i>' + pc + '%</i></div>'
-        + rows(j.branches, function(v){ return v.done + "/" + v.total; });
 
       var t = j.tasks || {};
       T.innerHTML = '<div class="row"><span>Bajarilgan</span><b>' + (t.done || 0) + '</b></div>'
