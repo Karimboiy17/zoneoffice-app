@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Kelganlar videosi</title>
+<link rel="stylesheet" href="../style.css?v=49">
+<style>
+  .tabs{display:flex;gap:6px;margin:12px 0}
+  .sum{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:14px}
+  .sum b{font-size:18px}
+  .it{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}
+  .it .top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .it .nm{flex:1;font-size:14px;font-weight:600}
+  .it .tm{font-size:12px;color:var(--dim)}
+  .tag{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600}
+  .tag.in{background:rgba(52,199,123,.16);color:#34c77b}
+  .tag.out{background:rgba(240,161,58,.16);color:#f0a13a}
+  .it video,.it img{width:100%;border-radius:10px;background:#000;display:block}
+  .none{color:var(--dim);font-size:13px;padding:6px 0}
+  .miss{font-size:13px;color:var(--dim);line-height:1.6}
+  .empty{color:var(--dim);font-size:14px;text-align:center;padding:22px 0}
+  #msg{text-align:center;font-size:12px;color:var(--dim);margin-top:8px;min-height:16px}
+</style>
+<link rel="stylesheet" href="../assets/ui.css?v=49">
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <a class="back" href="../index.html">‹</a>
+    <div><div class="ttl">🎥 Kelganlar videosi</div><div class="sub" id="who">—</div></div>
+  </div>
+
+  <div class="tabs">
+    <input type="date" id="d" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font-family:inherit">
+  </div>
+
+  <div class="sum" id="sum">Yuklanmoqda…</div>
+  <div id="list"></div>
+  <div class="sum" id="missbox" style="display:none"><h3 style="margin:0 0 6px;font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px">Kirmaganlar</h3><div class="miss" id="miss"></div></div>
+  <div id="msg"></div>
+</div>
+
+<script src="../assets/telegram-web-app.js"></script>
+<script src="../assets/tg.js?v=49"></script>
+<script>
+var API = "https://zoneoffice-app-production.up.railway.app/api/tmt/checkins";
+var dEl = document.getElementById("d");
+var list = document.getElementById("list");
+
+function todayStr(){
+  var d = new Date(), m = d.getMonth()+1, day = d.getDate();
+  return d.getFullYear() + "-" + ("0"+m).slice(-2) + "-" + ("0"+day).slice(-2);
+}
+dEl.value = todayStr();
+dEl.onchange = load;
+
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+function load(){
+  list.innerHTML = "";
+  document.getElementById("sum").textContent = "Yuklanmoqda…";
+  document.getElementById("msg").textContent = "";
+  document.getElementById("missbox").style.display = "none";
+  var url = API + "?date=" + encodeURIComponent(dEl.value || todayStr());
+  tgFetch(url).then(function(r){
+    if (r.status === 403) throw new Error("Bu bo'lim faqat menejer uchun");
+    return r.json().then(function(j){ return {code:r.status, j:j}; });
+  }).then(function(res){
+    var j = res.j || {};
+    if (!j.ok) throw new Error(j.error || ("HTTP " + res.code));
+    var items = j.items || [];
+    var ins = items.filter(function(x){ return x.purpose === "checkin"; });
+    document.getElementById("sum").innerHTML =
+      "Bugun <b>" + (j.count || 0) + "</b> xodim kirdi · jami video/rasm: <b>" + items.length + "</b>";
+    if (!items.length){
+      list.innerHTML = '<div class="empty">Bu kunda video yo\u2019q</div>';
+    }
+    items.forEach(function(x){
+      var el = document.createElement("div");
+      el.className = "it";
+      var media = (x.kind === "video")
+        ? '<video controls playsinline preload="metadata" src="' + esc(x.url) + '"></video>'
+        : '<img src="' + esc(x.url) + '" alt="">';
+      el.innerHTML = '<div class="top"><span class="nm">' + esc(x.name) + '</span>' +
+        '<span class="tag ' + (x.purpose === "checkin" ? "in" : "out") + '">' +
+        (x.purpose === "checkin" ? "keldi" : "ketdi") + '</span>' +
+        '<span class="tm">' + esc(x.t) + '</span></div>' + media;
+      list.appendChild(el);
+    });
+    var miss = j.missing || [];
+    if (miss.length && dEl.value === todayStr()){
+      document.getElementById("missbox").style.display = "";
+      document.getElementById("miss").textContent = miss.map(function(m){ return m.name; }).join(", ");
+    }
+  }).catch(function(e){
+    document.getElementById("sum").textContent = "—";
+    document.getElementById("msg").textContent = "Xato: " + e.message;
+  });
+}
+
+tgWaitInit(function(){
+  tgJson("/api/webapp/me").then(function(me){
+    if (me && me.name) document.getElementById("who").textContent = me.name;
+  }).catch(function(){});
+  load();
+});
+</script>
+</body>
+</html>

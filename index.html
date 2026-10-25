@@ -33,6 +33,10 @@
     <span class="chip"><svg viewBox="0 0 24 24"><path d="M4 8h11v9H4z"/><path d="M15 11l5-3v9l-5-3"/></svg></span>
     <span class="txt"><b>Davomat</b><i>keldim · ketdim</i></span>
   </a>
+  <a class="card" data-ac="sky" data-perm="admin" data-sec="checkins" href="pages/checkins.html">
+    <span class="chip"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/><circle cx="9.5" cy="12" r="2.2"/></svg></span>
+    <span class="txt"><b>Kelganlar videosi</b><i>kim kirdi · video</i></span>
+  </a>
   <a class="card" data-ac="gold" href="pages/ranking.html">
     <span class="chip"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M8 5H5v2a3 3 0 003 3M16 5h3v2a3 3 0 01-3 3"/><path d="M12 13v4M9 20h6"/></svg></span>
     <span class="txt"><b>Reyting</b><i>kunlik ball · filial</i></span>
@@ -54,7 +58,7 @@
 (function(){
   // Deep link: start_param (menyu tugmasi: t.me/zoneofficebot/app?startapp=tasks)
   // yoki ?go=tasks&id=17 (botdagi tugma) -> kerakli sahifani darhol ochadi.
-  var OK = {tasks:1, attendance:1, ranking:1, reports:1, admin:1};
+  var OK = {tasks:1, attendance:1, ranking:1, reports:1, admin:1, checkins:1};
   var sec = "", id = "";
   try { var sp = (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.start_param) || ""; } catch(e){}
   try {
