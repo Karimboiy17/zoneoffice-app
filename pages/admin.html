@@ -164,9 +164,10 @@ function chipRow(id, opts, key){
 
 function drawChips(){
   chipRow("mRole", [
-    {v:"worker", t:"Xodim (worker)"},
+    {v:"worker", t:"Xodim (office manager)"},
     {v:"staff", t:"Staff"},
-    {v:"manager", t:"Menejer"}
+    {v:"coordinator", t:"Koordinator"},
+    {v:"manager", t:"Menejer (sales)"}
   ], "role");
   var bs = BRANCH_LIST.map(function(b){ return {v:b, t:b}; });
   bs.push({v:"—", t:"—"});
