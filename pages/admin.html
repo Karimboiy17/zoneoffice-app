@@ -186,6 +186,7 @@ function drawBranchChips(){
   var multi = (SEL.role === "coordinator");
   var parts = branchParts();
   var bs = BRANCH_LIST.map(function(b){ return {v:b, t:b}; });
+  if (multi) bs.push({v:"Barcha filiallar", t:"Barcha filiallar"});
   bs.push({v:"—", t:"—"});
   document.getElementById("mBranch").innerHTML = bs.map(function(o){
     var on = multi ? (o.v !== "—" && parts.indexOf(o.v) >= 0) : (SEL.branch === o.v);
@@ -194,7 +195,7 @@ function drawBranchChips(){
   Array.prototype.forEach.call(document.getElementById("mBranch").querySelectorAll(".chip"), function(b){
     b.onclick = function(){
       var v = b.getAttribute("data-v");
-      if (!multi || v === "—"){ SEL.branch = v; drawChips(); return; }
+      if (!multi || v === "—" || v === "Barcha filiallar"){ SEL.branch = v; drawChips(); return; }
       var cur = branchParts();
       var k = cur.indexOf(v);
       if (k >= 0){ cur.splice(k, 1); } else { cur.push(v); }
