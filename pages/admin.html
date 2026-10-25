@@ -169,13 +169,39 @@ function drawChips(){
     {v:"coordinator", t:"Koordinator"},
     {v:"manager", t:"Menejer (sales)"}
   ], "role");
-  var bs = BRANCH_LIST.map(function(b){ return {v:b, t:b}; });
-  bs.push({v:"—", t:"—"});
-  chipRow("mBranch", bs, "branch");
+  drawBranchChips();
   chipRow("mStatus", [
     {v:"active", t:"Faol"},
     {v:"blocked", t:"Bloklangan", d:true}
   ], "status");
+}
+
+function branchParts(){
+  return String(SEL.branch || "").split(",").map(function(x){ return x.trim(); })
+         .filter(function(x){ return x && x !== "—"; });
+}
+
+function drawBranchChips(){
+  // koordinator uchun bir nechta filial tanlash mumkin (masalan: Integro A + Online darslar)
+  var multi = (SEL.role === "coordinator");
+  var parts = branchParts();
+  var bs = BRANCH_LIST.map(function(b){ return {v:b, t:b}; });
+  bs.push({v:"—", t:"—"});
+  document.getElementById("mBranch").innerHTML = bs.map(function(o){
+    var on = multi ? (o.v !== "—" && parts.indexOf(o.v) >= 0) : (SEL.branch === o.v);
+    return '<button class="chip' + (on ? " on" : "") + '" data-v="' + esc(o.v) + '">' + esc(o.t) + '</button>';
+  }).join("");
+  Array.prototype.forEach.call(document.getElementById("mBranch").querySelectorAll(".chip"), function(b){
+    b.onclick = function(){
+      var v = b.getAttribute("data-v");
+      if (!multi || v === "—"){ SEL.branch = v; drawChips(); return; }
+      var cur = branchParts();
+      var k = cur.indexOf(v);
+      if (k >= 0){ cur.splice(k, 1); } else { cur.push(v); }
+      SEL.branch = cur.length ? cur.join(", ") : "—";
+      drawChips();
+    };
+  });
 }
 
 function openUser(cid){
