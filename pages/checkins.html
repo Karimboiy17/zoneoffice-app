@@ -45,6 +45,7 @@
 <script src="../assets/tg.js?v=49"></script>
 <script>
 var API = "https://zoneoffice-app-production.up.railway.app/api/tmt/checkins";
+var ORIGIN = API.replace(/\/api\/.*$/, "");   // media URL'lar nisbiy keladi -> to'liq manzil
 var dEl = document.getElementById("d");
 var list = document.getElementById("list");
 
@@ -80,9 +81,10 @@ function load(){
     items.forEach(function(x){
       var el = document.createElement("div");
       el.className = "it";
+      var mu = (x.url && x.url.charAt(0) === "/") ? (ORIGIN + x.url) : (x.url || "");
       var media = (x.kind === "video")
-        ? '<video controls playsinline preload="metadata" src="' + esc(x.url) + '"></video>'
-        : '<img src="' + esc(x.url) + '" alt="">';
+        ? '<video controls playsinline preload="metadata" src="' + esc(mu) + '"></video>'
+        : '<img src="' + esc(mu) + '" alt="">';
       el.innerHTML = '<div class="top"><span class="nm">' + esc(x.name) + '</span>' +
         '<span class="tag ' + (x.purpose === "checkin" ? "in" : "out") + '">' +
         (x.purpose === "checkin" ? "keldi" : "ketdi") + '</span>' +
